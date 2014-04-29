@@ -26,7 +26,7 @@
 
 	<target name="build-sample-sql" depends="compile">
 		<property name="sample.sql.properties.file" value="${basedir}/so-benchmarks.properties" />
-		<property name="sql.dir" value="../docroot/WEB-INF/sql" />
+		<property name="sql.dir" value="${basedir}/../docroot/WEB-INF/sql" />
 
 		<copy file="${sample.sql.properties.file}" tofile="temp.properties" overwrite="true" />
 
