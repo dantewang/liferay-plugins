@@ -2630,12 +2630,8 @@ for (String path : paths) {
 			module.dirs="${plugins.includes.path}"
 			target.name="clean"
 		/>
-		<if>
-			<available file="${basedir}/module-sql" />
-			<then>
-				<delete dir="${basedir}/module-sql" />
-			</then>
-		</if>
+
+		<delete dir="${basedir}/module-sql" failonerror="false" />
 	</target>
 
 	<target name="compile">
