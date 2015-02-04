@@ -1318,13 +1318,13 @@ Please find a solution that does not require portal-impl.jar.
 				<available file="@{module.dir}/src/META-INF/sql" />
 				<then>
 					<concat destfile="${basedir}/module-sql/module-tables.sql" append="true">
-						<fileset  dir="@{module.dir}/src/META-INF/sql" includes="tables.sql"/>
+						<fileset dir="@{module.dir}/src/META-INF/sql" includes="tables.sql" />
 					</concat>
 
 					<echo message="${line.separator}${line.separator}" file="${basedir}/module-sql/module-tables.sql" append="true" />
 
 					<concat destfile="${basedir}/module-sql/module-indexes.sql" append="true">
-						<fileset  dir="@{module.dir}/src/META-INF/sql" includes="indexes.sql"/>
+						<fileset dir="@{module.dir}/src/META-INF/sql" includes="indexes.sql" />
 					</concat>
 
 					<echo message="${line.separator}${line.separator}" file="${basedir}/module-sql/module-indexes.sql" append="true" />
