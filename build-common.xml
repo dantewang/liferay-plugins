@@ -1315,6 +1315,22 @@ Please find a solution that does not require portal-impl.jar.
 					</if>
 				</else>
 			</if>
+			<if>
+				<available file="@{module.dir}/src/META-INF/sql" />
+				<then>
+					<concat destfile="${basedir}/module-sql/module-tables.sql" append="true">
+						<fileset  dir="@{module.dir}/src/META-INF/sql" includes="tables.sql"/>
+					</concat>
+
+					<echo message="${line.separator}${line.separator}" file="${basedir}/module-sql/module-tables.sql" append="true" />
+
+					<concat destfile="${basedir}/module-sql/module-indexes.sql" append="true">
+						<fileset  dir="@{module.dir}/src/META-INF/sql" includes="indexes.sql"/>
+					</concat>
+
+					<echo message="${line.separator}${line.separator}" file="${basedir}/module-sql/module-indexes.sql" append="true" />
+				</then>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -2582,6 +2598,12 @@ for (String path : paths) {
 			module.dirs="${plugins.includes.path}"
 			target.name="clean"
 		/>
+		<if>
+			<available file="${basedir}/module-sql" />
+			<then>
+				<delete dir="${basedir}/module-sql" />
+			</then>
+		</if>
 	</target>
 
 	<target name="compile">
