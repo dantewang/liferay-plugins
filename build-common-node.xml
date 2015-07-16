@@ -5,36 +5,54 @@
 	<macrodef name="download-node">
 		<sequential>
 			<if>
-				<os arch="x86_32" family="mac" />
+				<and>
+					<os family="mac" />
+					<equals arg1="${sun.arch.data.model}" arg2="32" />
+				</and>
 				<then>
 					<propertycopy from="nodejs.url[osx32]" name="nodejs.url" />
 				</then>
 				<elseif>
-					<os arch="x86_64" family="mac" />
+					<and>
+						<os family="mac" />
+						<equals arg1="${sun.arch.data.model}" arg2="64" />
+					</and>
 					<then>
 						<propertycopy from="nodejs.url[osx64]" name="nodejs.url" />
 					</then>
 				</elseif>
 				<elseif>
-					<os arch="amd" family="unix" />
+					<and>
+						<os family="unix" />
+						<equals arg1="${sun.arch.data.model}" arg2="32" />
+					</and>
 					<then>
 						<propertycopy from="nodejs.url[linux32]" name="nodejs.url" />
 					</then>
 				</elseif>
 				<elseif>
-					<os arch="amd64" family="unix" />
+					<and>
+						<os family="unix" />
+						<equals arg1="${sun.arch.data.model}" arg2="64" />
+					</and>
 					<then>
 						<propertycopy from="nodejs.url[linux64]" name="nodejs.url" />
 					</then>
 				</elseif>
 				<elseif>
-					<os arch="x86" family="windows" />
+					<and>
+						<os family="windows" />
+						<equals arg1="${sun.arch.data.model}" arg2="32" />
+					</and>
 					<then>
 						<propertycopy from="nodejs.url[windows32]" name="nodejs.url" />
 					</then>
 				</elseif>
 				<elseif>
-					<os arch="amd64" family="windows" />
+					<and>
+						<os family="windows" />
+						<equals arg1="${sun.arch.data.model}" arg2="64" />
+					</and>
 					<then>
 						<propertycopy from="nodejs.url[windows64]" name="nodejs.url" />
 					</then>
@@ -131,6 +149,12 @@ ${nodejs.url[osx64]}.
 							/>
 						</then>
 					</if>
+
+					<node-execute
+						node.args="config set cache ${sdk.tools.dir}/node-v${nodejs.version}/.cache --global"
+						node.command="npm"
+						node.working.dir="${sdk.tools.dir}/node-v${nodejs.version}"
+					/>
 				</then>
 			</if>
 		</sequential>
@@ -138,20 +162,25 @@ ${nodejs.url[osx64]}.
 
 	<macrodef name="download-node-module">
 		<attribute name="node.module.name" />
+		<attribute name="node.module.version" />
 
 		<sequential>
+			<loadfile failonerror="false" property="package.json.content" srcFile="${sdk.tools.dir}/node-v${nodejs.version}/node_modules/@{node.module.name}/package.json" />
+
 			<if>
 				<not>
-					<available file="${sdk.tools.dir}/node-v${nodejs.version}/node_modules/@{node.module.name}" />
+					<contains string="${package.json.content}" substring="&quot;version&quot;: &quot;@{node.module.version}&quot;" />
 				</not>
 				<then>
 					<node-execute
-						node.args="install @{node.module.name}"
+						node.args="install @{node.module.name}@&quot;@{node.module.version}&quot;"
 						node.command="npm"
 						node.working.dir="${sdk.tools.dir}/node-v${nodejs.version}"
 					/>
 				</then>
 			</if>
+
+			<var name="package.json.content" unset="true" />
 		</sequential>
 	</macrodef>
 
@@ -173,9 +202,19 @@ ${nodejs.url[osx64]}.
 				</then>
 			</if>
 
-			<exec dir="@{node.working.dir}" executable="${sdk.tools.dir}/node-v${nodejs.version}/bin/@{node.command}">
-				<arg line="@{node.command.args} @{node.args}" />
-			</exec>
+			<if>
+				<os family="unix" />
+				<then>
+					<exec dir="@{node.working.dir}" executable="${sdk.tools.dir}/node-v${nodejs.version}/bin/@{node.command}">
+						<arg line="@{node.command.args} @{node.args}" />
+					</exec>
+				</then>
+				<else>
+					<exec dir="@{node.working.dir}" executable="${sdk.tools.dir}/node-v${nodejs.version}/@{node.command}.cmd">
+						<arg line="@{node.command.args} @{node.args}" />
+					</exec>
+				</else>
+			</if>
 		</sequential>
 	</macrodef>
 
@@ -183,6 +222,8 @@ ${nodejs.url[osx64]}.
 		<attribute name="module.dir" />
 
 		<sequential>
+			<delete dir="@{module.dir}/.js-cache" failonerror="false" />
+
 			<mkdir dir="@{module.dir}/.js-cache" />
 
 			<copy
@@ -195,20 +236,23 @@ ${nodejs.url[osx64]}.
 
 			<copy todir="@{module.dir}/tmp/transpile">
 				<fileset dir="@{module.dir}/src" id="transpile.fileset">
-					<include name="**/*.es.js" />
+					<include name="**/${transpile.file.pattern}" />
 				</fileset>
 			</copy>
 
 			<download-node-module
 				node.module.name="babel"
+				node.module.version="${nodejs.modules.version[babel]}"
 			/>
 
 			<download-node-module
 				node.module.name="lfr-amd-loader"
+				node.module.version="${nodejs.modules.version[lfr-amd-loader]}"
 			/>
 
 			<download-node-module
 				node.module.name="lfr-module-config-generator"
+				node.module.version="${nodejs.modules.version[lfr-module-config-generator]}"
 			/>
 
 			<pathconvert pathsep=" " property="transpile.files" setonempty="false" refid="transpile.fileset" >
@@ -225,7 +269,7 @@ ${nodejs.url[osx64]}.
 
 			<node-execute
 				node.command="node"
-				node.command.args="${sdk.tools.dir}/node-v${nodejs.version}/node_modules/lfr-module-config-generator/bin/index.js -c '' -e '' -f /_/g,- -i true -l -m @{module.dir}/.js-cache/bower.json -o @{module.dir}/classes/META-INF/config.json -p **/*.es.js -r @{module.dir}/.js-cache/META-INF/resources @{module.dir}/.js-cache"
+				node.command.args="${sdk.tools.dir}/node-v${nodejs.version}/node_modules/lfr-module-config-generator/bin/index.js -c '' -e '' -f /_/g,- -i true -l -m @{module.dir}/.js-cache/bower.json -o @{module.dir}/classes/META-INF/config.json -r @{module.dir}/.js-cache/META-INF/resources @{module.dir}/.js-cache"
 				node.working.dir="${sdk.tools.dir}/node-v${nodejs.version}"
 			/>
 		</sequential>

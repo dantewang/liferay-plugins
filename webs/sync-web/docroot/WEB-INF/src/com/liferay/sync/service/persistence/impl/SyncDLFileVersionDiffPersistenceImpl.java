@@ -1446,8 +1446,8 @@ public class SyncDLFileVersionDiffPersistenceImpl extends BasePersistenceImpl<Sy
 	}
 
 	protected void cacheUniqueFindersCache(
-		SyncDLFileVersionDiff syncDLFileVersionDiff) {
-		if (syncDLFileVersionDiff.isNew()) {
+		SyncDLFileVersionDiff syncDLFileVersionDiff, boolean isNew) {
+		if (isNew) {
 			Object[] args = new Object[] {
 					syncDLFileVersionDiff.getFileEntryId(),
 					syncDLFileVersionDiff.getSourceFileVersionId(),
@@ -1670,7 +1670,7 @@ public class SyncDLFileVersionDiffPersistenceImpl extends BasePersistenceImpl<Sy
 			syncDLFileVersionDiff.getPrimaryKey(), syncDLFileVersionDiff, false);
 
 		clearUniqueFindersCache(syncDLFileVersionDiff);
-		cacheUniqueFindersCache(syncDLFileVersionDiff);
+		cacheUniqueFindersCache(syncDLFileVersionDiff, isNew);
 
 		syncDLFileVersionDiff.resetOriginalValues();
 
@@ -2058,6 +2058,11 @@ public class SyncDLFileVersionDiffPersistenceImpl extends BasePersistenceImpl<Sy
 	@Override
 	protected Set<String> getBadColumnNames() {
 		return _badColumnNames;
+	}
+
+	@Override
+	protected Map<String, Integer> getTableColumnsMap() {
+		return SyncDLFileVersionDiffModelImpl.TABLE_COLUMNS_MAP;
 	}
 
 	/**
